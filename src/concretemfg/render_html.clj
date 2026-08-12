@@ -545,8 +545,18 @@
         "<span class=\"muted\">—</span>")
       (esc (or summary "—"))))
 
+(def ^:private approver-hit-sample
+  "How many approver-key hits a surface lists inline before the cell is
+  truncated. Truncation is ANNOUNCED (below) rather than silent -- a
+  cell that shows 4 of 5 without saying so reads as though 4 is the
+  whole answer, which is the same class of mistake as omitting the
+  approver disclosure entirely."
+  4)
+
 (defn- approver-surface-row [{:keys [surface persisted? data]}]
-  (let [hits (approver-hits data)]
+  (let [hits (approver-hits data)
+        shown (take approver-hit-sample hits)
+        hidden (- (count hits) (count shown))]
     (tr (esc surface)
         (if persisted?
           "<span class=\"ok\">persisted</span>"
@@ -555,8 +565,10 @@
           (str "<span class=\"ok\">" (count hits) "</span>")
           "<span class=\"err\">0</span>")
         (if (seq hits)
-          (str/join "<br>" (map #(str (code (pr-str (:path %))) " = " (code (:value %)))
-                                (take 4 hits)))
+          (str (str/join "<br>" (map #(str (code (pr-str (:path %))) " = " (code (:value %)))
+                                     shown))
+               (when (pos? hidden)
+                 (str "<br><span class=\"muted\">… 他 " (esc hidden) " 箇所（省略）</span>")))
           "<span class=\"muted\">no approver key anywhere in this structure</span>"))))
 
 ;; ----------------------------- document -----------------------------
