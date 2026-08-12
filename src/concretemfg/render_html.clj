@@ -286,7 +286,21 @@
   (->> (audit-of entry)
        (filter #(#{:governor-hold :approval-rejected} (:t %)))
        (mapcat :basis)
-       (mapv name)))
+       (mapv str)))
+
+(defn- hard-held?
+  "Did this run end in a hold the human never saw? A run a human
+  actually rejected ended in a hold too, but it is not that."
+  [entry]
+  (and (= :hold (:disposition (final-state entry)))
+       (not= :rejected (:status (:approval entry)))))
+
+(defn- hard-holds-referencing
+  "Runs HARD-held whose request named `id` under `k` -- exact, taken
+  from the request the actor was actually given, never string-matched
+  out of a rendered message."
+  [runs k id]
+  (filterv #(and (hard-held? %) (= id (get-in % [:request :value k]))) runs))
 
 (defn- violation-rows
   "One entry per (hold fact x violation) -- the rule-coverage source."
@@ -356,7 +370,12 @@
 
 (defn- code [v] (str "<code>" (esc v) "</code>"))
 
-(defn- kw-name [v] (if (keyword? v) (name v) (str v)))
+(defn- kw-name
+  "Keywords print with their namespace AND their colon -- `:batch/upsert`
+  is not `upsert`, and eliding either would misreport a closed
+  allowlist."
+  [v]
+  (str v))
 
 (defn- yn [b]
   (if b "<span class=\"ok\">yes</span>" "<span class=\"err\">no</span>"))
@@ -428,16 +447,20 @@
           (str/join " " (map code basis))
           "<span class=\"muted\">—</span>"))))
 
-(defn- batch-row [ledger {:keys [id product-type material weight-kg shipped-weight-kg
-                                 dimensional-deviation-percent defect-rate-percent
-                                 verified? registered? last-assessed]}]
+(defn- held-cell
+  "The HARD holds this run produced against one entity, listed by the
+  subject of the request that was held."
+  [held]
+  (if (seq held)
+    (str "<span class=\"critical\">" (count held) "</span> "
+         (str/join " " (map #(code (get-in % [:request :subject])) held)))
+    "<span class=\"muted\">0</span>"))
+
+(defn- batch-row [runs {:keys [id product-type material weight-kg shipped-weight-kg
+                               dimensional-deviation-percent defect-rate-percent
+                               verified? registered? last-assessed]}]
   (let [headroom (when (and (number? weight-kg) (number? shipped-weight-kg))
-                   (- (double weight-kg) (double shipped-weight-kg)))
-        holds (count (filter #(and (= :governor-hold (:t %))
-                                   (= :coordinate-shipment (:op %))
-                                   (some (fn [v] (str/includes? (str (:detail v)) (str id)))
-                                         (:violations %)))
-                             ledger))]
+                   (- (double weight-kg) (double shipped-weight-kg)))]
     (tr (code id)
         (code product-type)
         (esc material)
@@ -451,18 +474,17 @@
         (yn verified?)
         (yn registered?)
         (esc last-assessed)
-        (if (pos? holds)
-          (str "<span class=\"critical\">" holds "</span>")
-          "<span class=\"muted\">0</span>"))))
+        (held-cell (hard-holds-referencing runs :batch-id id)))))
 
-(defn- equipment-row [{:keys [id kind verified? registered? last-maintenance-date
-                              last-scheduled-maintenance-date]}]
+(defn- equipment-row [runs {:keys [id kind verified? registered? last-maintenance-date
+                                   last-scheduled-maintenance-date]}]
   (tr (code id)
       (code kind)
       (yn verified?)
       (yn registered?)
       (esc (or last-maintenance-date "—"))
-      (esc (or last-scheduled-maintenance-date "—"))))
+      (esc (or last-scheduled-maintenance-date "—"))
+      (held-cell (hard-holds-referencing runs :equipment-id id))))
 
 (defn- maintenance-row [{:keys [id equipment-id maintenance-type scheduled-date
                                 actuate-mixing-line? scheduled? maintenance-number]}]
@@ -601,8 +623,9 @@
                    "governor は出荷提案のたびにこれを提案の自己申告ではなくバッチ自身の記録から再計算する "
                    "(<code>concretemfg.registry/shipment-weight-exceeded?</code>)。")
               (table ["batch" "product-type" "material" "weight-kg" "shipped-kg" "headroom"
-                      "寸法偏差%" "不良率%" "verified?" "registered?" "last-assessed" "出荷 HARD hold"]
-                     (map (partial batch-row ledger) (store/all-batches db))))
+                      "寸法偏差%" "不良率%" "verified?" "registered?" "last-assessed"
+                      "このバッチを名指しした HARD hold"]
+                     (map (partial batch-row runs) (store/all-batches db))))
 
      (section "設備 (SSoT / seed + この実行のコミット)"
               (str "<code>concretemfg.store/all-equipment</code> の現在値。"
@@ -610,8 +633,9 @@
                    "保守作業予定は一切スケジュールできない (<code>registry/equipment-ready?</code>、"
                    "governor が advisor の申告とは独立に再検証する)。")
               (table ["equipment" "kind" "verified?" "registered?"
-                      "last-maintenance-date" "last-scheduled-maintenance-date"]
-                     (map equipment-row (store/all-equipment db))))
+                      "last-maintenance-date" "last-scheduled-maintenance-date"
+                      "この設備を名指しした HARD hold"]
+                     (map (partial equipment-row runs) (store/all-equipment db))))
 
      (section "保守作業予定ドラフト (コミット済み)"
               (str "コミットされたのは DRAFT であって実行ではない。"
