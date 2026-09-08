@@ -27,7 +27,7 @@
   Usage: `clojure -M:dev:render-html [out-file]`
   (default `docs/samples/operator-console.html`)."
   (:require [jp-go-dds.skin]
-            [clojure.string :as str]
+            [kotoba.lang.text :as str]
             [concretemfg.store :as store]
             [concretemfg.operation :as op]
             [concretemfg.governor :as governor]
