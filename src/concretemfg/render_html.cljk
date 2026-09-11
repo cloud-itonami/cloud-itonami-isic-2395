@@ -24,7 +24,7 @@
   console this page exists to disprove, so it must not be writable by
   accident.
 
-  Usage: `clojure -M:dev:render-html [out-file]`
+  Usage: `kbb -M:dev:render-html [out-file]`
   (default `docs/samples/operator-console.html`)."
   (:require [jp-go-dds.skin]
             [kotoba.lang.text :as str]
@@ -604,7 +604,7 @@
      "<main>\n"
 
      "  <section class=\"banner\">\n"
-     "    <p>このページは手書きではない。<code>clojure -M:dev:render-html</code> が実際の actor スタック\n"
+     "    <p>このページは手書きではない。<code>kbb -M:dev:render-html</code> が実際の actor スタック\n"
      "    (<code>concretemfg.operation</code> の langgraph StateGraph → <code>concretemfg.advisor</code>\n"
      "    → <code>concretemfg.governor</code> → <code>concretemfg.phase</code> → <code>concretemfg.store</code>)\n"
      "    をビルド時に走らせ、その出力だけを描画している。登場する ID・重量・判定・違反理由は\n"
@@ -759,7 +759,7 @@
      "</main>\n"
      "<footer>\n"
      "  <p>Generated at build time by <code>concretemfg.render-html</code> "
-     "(<code>clojure -M:dev:render-html</code>) from "
+     "(<code>kbb -M:dev:render-html</code>) from "
      "<code>concretemfg.store/sample-data!</code>. Deterministic: no timestamps, no clock, no randomness — "
      "two runs are byte-identical. Regenerate after changing the actor, the governor or the seed.</p>\n"
      "  <p>cloud-itonami-isic-2395 · AGPL-3.0-or-later · この actor は提案のみを行い、"
