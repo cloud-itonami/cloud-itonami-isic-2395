@@ -2477,7 +2477,7 @@ img,svg { max-width: 100%; height: auto; }
 </p>
 <main>
   <section class="banner">
-    <p>このページは手書きではない。<code>clojure -M:dev:render-html</code> が実際の actor スタック
+    <p>このページは手書きではない。<code>kbb -M:dev:render-html</code> が実際の actor スタック
     (<code>concretemfg.operation</code> の langgraph StateGraph → <code>concretemfg.advisor</code>
     → <code>concretemfg.governor</code> → <code>concretemfg.phase</code> → <code>concretemfg.store</code>)
     をビルド時に走らせ、その出力だけを描画している。登場する ID・重量・判定・違反理由は
@@ -2697,7 +2697,7 @@ img,svg { max-width: 100%; height: auto; }
   </section>
 </main>
 <footer>
-  <p>Generated at build time by <code>concretemfg.render-html</code> (<code>clojure -M:dev:render-html</code>) from <code>concretemfg.store/sample-data!</code>. Deterministic: no timestamps, no clock, no randomness — two runs are byte-identical. Regenerate after changing the actor, the governor or the seed.</p>
+  <p>Generated at build time by <code>concretemfg.render-html</code> (<code>kbb -M:dev:render-html</code>) from <code>concretemfg.store/sample-data!</code>. Deterministic: no timestamps, no clock, no randomness — two runs are byte-identical. Regenerate after changing the actor, the governor or the seed.</p>
   <p>cloud-itonami-isic-2395 · AGPL-3.0-or-later · この actor は提案のみを行い、ミキサー・バッチングプラント・成形ラインの直接操作も実際の配車も一切行わない。</p>
 </footer>
 </body></html>
