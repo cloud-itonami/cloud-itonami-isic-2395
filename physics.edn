@@ -1,0 +1,45 @@
+;; What this vertical's robot physically does, declared for
+;; kotoba.robotics.process (kotoba-lang/robotics). `kbb -M:dev:physics` runs it.
+;;
+;; The README has no "Robotics premise" section; its Scope names the plant
+;; this actor coordinates (ISIC 2395): batching concrete/mortar/plaster,
+;; moulding or casting into forms and curing (steam, autoclave or ambient)
+;; into precast panels, pipe, blocks and plaster products. The physical
+;; work of that plant taken here: steam curing of a precast element whose
+;; own hydration heat adds to the chamber's, the incoming-inspection
+;; tensile test of the reinforcing bar cast into it, and demoulding
+;; concrete blocks onto the curing rack.
+;;
+;; Every number without a cited source is marked `estimate` in its :basis.
+;; Replacing an estimate with a sourced value is this bot's growth work.
+{:physics/schema "itonami.physical-ai.spec.v1"
+ :repo "cloud-itonami/cloud-itonami-isic-2395"
+ :cases
+ [{:id :precast-steam-cure
+   :kind :thermal
+   :procedure "precast wall element (200 mm, half thickness 100 mm, mid-plane adiabatic) in a 60 C steam-curing chamber for 16 h while the cement hydrates; core temperature judged"
+   :params {:thickness-m 0.10 :conductivity-w-mk 2.0 :density-kg-m3 2400.0 :specific-heat-j-kgk 1000.0
+            :t0-c 20.0 :t-hot-c 60.0 :h-front-w-m2k 15.0 :h-back-w-m2k 0.0
+            :threshold-c 70.0 :duration-s 57600.0 :nodes 11}
+   :sweep {:param :q-gen-w-m3 :values [0.0 500.0 1000.0 2000.0 3000.0]}
+   :quantity :peak-back-c
+   :limit {:max 70.0 :basis "estimate: 70 C taken as the core-temperature ceiling against delayed ettringite formation; the hydration heat is a constant average, not a measured cement curve"}
+   :boundary {:lo 0.0 :hi 8000.0}}
+  {:id :rebar-incoming-tensile
+   :kind :material
+   :procedure "incoming-inspection robot pulls a D13 deformed bar specimen (100 mm gauge) to 70 kN on the tensile frame; the 0.2 % offset yield force is judged against the SD345 minimum"
+   :params {:length-m 0.10 :area-m2 1.267e-4 :youngs-modulus-pa 200.0e9 :hardening-pa 1.0e9
+            :density-kg-m3 7850.0 :max-force-n 70000.0}
+   :sweep {:param :yield-stress-pa :values [320.0e6 335.0e6 345.0e6 360.0e6 400.0e6]}
+   :quantity :yield-force-n
+   :limit {:min 43711.0 :basis "JIS G 3112 SD345: yield point >= 345 N/mm2; D13 nominal cross-section 126.7 mm2 (345 x 126.7 = 43711 N)"}
+   :boundary {:lo 300.0e6 :hi 420.0e6}}
+  {:id :block-demoulding
+   :kind :manipulator
+   :procedure "arm lifts freshly demoulded concrete blocks from the block machine's board onto the curing rack"
+   :params {:l1-m 0.60 :l2-m 0.50 :m1-kg 9.0 :m2-kg 6.0
+            :from [0.75 0.10] :to [0.35 0.70] :duration-s 2.5 :steps 500}
+   :sweep {:param :payload-kg :values [8.0 12.0 16.0 20.0 25.0]}
+   :quantity :peak-tau1-nm
+   :limit {:max 300.0 :basis "estimate: continuous shoulder torque of a ~25 kg-payload handling arm class"}
+   :boundary {:lo 1.0 :hi 80.0}}]}
