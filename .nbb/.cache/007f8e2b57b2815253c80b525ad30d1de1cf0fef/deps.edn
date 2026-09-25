@@ -1,1 +1,0 @@
-{:deps {io.github.kotoba-lang/robotics {:local/root "../../kotoba-lang/robotics"}, io.github.kotoba-lang/edn {:git/sha "79dba32c8892058842c57783f06a2dfe4601aeb0"}}}
