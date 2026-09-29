@@ -58,7 +58,7 @@
 ;; instead would answer a question nobody asked. `^` and `$` away from their
 ;; anchor positions are refused for the same reason. A refusal is the error
 ;; arm of `[:result :i64 :string]`, distinct from every successful answer, so
-;; "outside the subset" can never be read as "no match" (root CLAUDE.md, the
+;; "outside the subset" can never be read as "no match" (root AGENTS.md, the
 ;; eight questions, #1 and #4).
 ;;
 ;; ## Character classes are ASCII, and say so
@@ -683,7 +683,7 @@
 ;; --- self check ------------------------------------------------------------
 ;; Answers FAILURES * 1000 + CHECKS RUN, so a build that ran no checks answers
 ;; 0 and is visibly different from a build that ran them all and passed (root
-;; CLAUDE.md: a boolean self-check cannot tell one regression apart from a
+;; AGENTS.md: a boolean self-check cannot tell one regression apart from a
 ;; broken build). All 47 passing is 47.
 
 (defn- chk [got :i64 want :i64] :i64
